@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
+import toast from "react-hot-toast";
 
 const demoPolicies = [
   { policyid: 1, name: "LAN-to-WAN", srcintf: "port1", dstintf: "wan1", srcaddr: "all", dstaddr: "all", action: "accept", service: "ALL", status: "enable", nat: "enable" },
@@ -19,7 +20,6 @@ export default function Policies() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
   const [form, setForm] = useState({
     name: "", srcintf: "port1", dstintf: "wan1",
     srcaddr: "all", dstaddr: "all", action: "accept", service: "ALL", nat: "enable",
@@ -64,14 +64,13 @@ export default function Policies() {
         },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      setSuccessMsg("Policy créée avec succès !");
+      toast.success("Policy créée avec succès !");
     } catch {
-      setSuccessMsg("Demo — policy générée");
+      toast("Demo — policy générée", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowForm(false);
       setForm({ name: "", srcintf: "port1", dstintf: "wan1", srcaddr: "all", dstaddr: "all", action: "accept", service: "ALL", nat: "enable" });
-      setTimeout(() => setSuccessMsg(""), 4000);
       fetchPolicies();
     }
   };
@@ -82,15 +81,17 @@ export default function Policies() {
       await axios.delete(`/api/v2/cmdb/firewall/policy/${policyid}`, {
         headers: { Authorization: `Bearer ${fortigate.token}` },
       });
-    } catch {}
-    setSuccessMsg("Policy supprimée !");
-    setTimeout(() => setSuccessMsg(""), 3000);
+      toast.success("Policy supprimée !");
+    } catch {
+      toast("Demo — suppression simulée", { icon: "⚠️" });
+    }
     fetchPolicies();
   };
 
   const handleToggle = (policy) => {
     const newStatus = policy.status === "enable" ? "disable" : "enable";
     setPolicies(prev => prev.map(p => p.policyid === policy.policyid ? { ...p, status: newStatus } : p));
+    toast.success(`Policy ${newStatus === "enable" ? "activée" : "désactivée"} !`);
   };
 
   return (
@@ -106,7 +107,6 @@ export default function Policies() {
           </div>
         </div>
 
-        {successMsg && <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-4 text-sm">{successMsg}</div>}
         {error && <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">⚠ {error}</div>}
 
         {showForm && (
@@ -190,9 +190,9 @@ export default function Policies() {
                     <td className="py-3 px-4 text-gray-300">{Array.isArray(policy.dstintf) ? policy.dstintf.map(i => i.name).join(", ") : policy.dstintf}</td>
                     <td className="py-3 px-4 text-gray-400">{Array.isArray(policy.service) ? policy.service.map(s => s.name).join(", ") : policy.service}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        policy.action === "accept" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                      }`}>{policy.action}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${policy.action === "accept" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                        {policy.action}
+                      </span>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`text-xs ${policy.nat === "enable" ? "text-blue-400" : "text-gray-500"}`}>{policy.nat}</span>
@@ -200,18 +200,14 @@ export default function Policies() {
                     <td className="py-3 px-4">
                       <button onClick={() => handleToggle(policy)}
                         className={`px-2 py-0.5 rounded text-xs font-semibold transition ${
-                          policy.status === "enable"
-                            ? "bg-green-500/20 text-green-400 hover:bg-green-500/40"
-                            : "bg-gray-600/40 text-gray-400 hover:bg-gray-600/60"
+                          policy.status === "enable" ? "bg-green-500/20 text-green-400 hover:bg-green-500/40" : "bg-gray-600/40 text-gray-400 hover:bg-gray-600/60"
                         }`}>
                         {policy.status === "enable" ? "ON" : "OFF"}
                       </button>
                     </td>
                     <td className="py-3 px-4">
                       <button onClick={() => handleDelete(policy.policyid)}
-                        className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded text-xs transition">
-                        ✕
-                      </button>
+                        className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded text-xs transition">✕</button>
                     </td>
                   </tr>
                 ))}

@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
+import toast from "react-hot-toast";
 
 const demoLogs = [
   { id: 1, timestamp: "2026-04-11 01:20:33", user: "admin", action: "LOGIN", module: "Auth", detail: "Connexion réussie depuis 192.168.1.100", status: "success" },
@@ -26,12 +27,12 @@ const actionColors = {
 };
 
 const moduleColors = {
-  Auth:    "text-blue-300",
-  VPN:     "text-purple-300",
-  Policy:  "text-orange-300",
-  Route:   "text-green-300",
+  Auth:     "text-blue-300",
+  VPN:      "text-purple-300",
+  Policy:   "text-orange-300",
+  Route:    "text-green-300",
   "SD-WAN": "text-cyan-300",
-  SLA:     "text-pink-300",
+  SLA:      "text-pink-300",
 };
 
 export default function Logs() {
@@ -85,7 +86,23 @@ export default function Logs() {
   const clearLogs = () => {
     if (window.confirm("Vider l'historique des logs ?")) {
       setLogs([]);
+      toast.success("Logs vidés !");
     }
+  };
+
+  const exportCSV = () => {
+    const headers = ["Timestamp", "Utilisateur", "Action", "Module", "Détail", "Statut"];
+    const rows = filtered.map(log =>
+      [log.timestamp, log.user, log.action, log.module, log.detail, log.status].join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `logs-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    toast.success("Logs exportés !");
   };
 
   const modules = ["Tous", "Auth", "VPN", "Policy", "Route", "SD-WAN", "SLA"];
@@ -105,10 +122,16 @@ export default function Logs() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-300">Historique des actions</h2>
           <div className="flex gap-3">
-            <button onClick={fetchLogs} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">
+            <button onClick={exportCSV}
+              className="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white px-4 py-2 rounded-lg text-sm transition">
+              ⬇ Export CSV
+            </button>
+            <button onClick={fetchLogs}
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">
               Rafraîchir
             </button>
-            <button onClick={clearLogs} className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-4 py-2 rounded-lg text-sm transition">
+            <button onClick={clearLogs}
+              className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-4 py-2 rounded-lg text-sm transition">
               Vider logs
             </button>
           </div>
@@ -136,13 +159,9 @@ export default function Logs() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            value={search}
+          <input type="text" placeholder="Rechercher..." value={search}
             onChange={e => setSearch(e.target.value)}
-            className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm w-64"
-          />
+            className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm w-64" />
           <select value={filterModule} onChange={e => setFilterModule(e.target.value)}
             className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-sm">
             {modules.map(m => <option key={m}>{m}</option>)}

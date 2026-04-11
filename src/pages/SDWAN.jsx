@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
+import toast from "react-hot-toast";
 
 const demoMembers = [
   { seq_num: 1, interface: "wan1", gateway: "203.0.113.254", priority: 0, weight: 0, cost: 0, status: "alive" },
@@ -30,13 +31,10 @@ export default function SDWAN() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("members");
-
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [showSLAForm, setShowSLAForm] = useState(false);
   const [showRuleForm, setShowRuleForm] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
   const [saving, setSaving] = useState(false);
-
   const [memberForm, setMemberForm] = useState({ interface: "wan1", gateway: "", priority: "0", weight: "0" });
   const [slaForm, setSlaForm] = useState({ name: "", server: "", protocol: "ping", latency: "100", jitter: "10", packetloss: "5" });
   const [ruleForm, setRuleForm] = useState({ name: "", mode: "load-balance", service: "ALL" });
@@ -67,11 +65,6 @@ export default function SDWAN() {
     }
   };
 
-  const showSuccess = (msg) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(""), 4000);
-  };
-
   const handleAddMember = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -80,9 +73,9 @@ export default function SDWAN() {
         { interface: memberForm.interface, gateway: memberForm.gateway, priority: parseInt(memberForm.priority), weight: parseInt(memberForm.weight) },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      showSuccess("Membre WAN ajouté !");
+      toast.success("Membre WAN ajouté !");
     } catch {
-      showSuccess("Demo — membre WAN ajouté");
+      toast("Demo — membre WAN ajouté", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowMemberForm(false);
@@ -106,9 +99,9 @@ export default function SDWAN() {
         },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      showSuccess("SLA créé avec succès !");
+      toast.success("SLA créé avec succès !");
     } catch {
-      showSuccess("Demo — SLA créé");
+      toast("Demo — SLA créé", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowSLAForm(false);
@@ -125,9 +118,9 @@ export default function SDWAN() {
         { name: ruleForm.name, mode: ruleForm.mode, "dst-negate": "disable" },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      showSuccess("Règle SD-WAN créée !");
+      toast.success("Règle SD-WAN créée !");
     } catch {
-      showSuccess("Demo — règle créée");
+      toast("Demo — règle créée", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowRuleForm(false);
@@ -145,7 +138,6 @@ export default function SDWAN() {
   return (
     <Layout>
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-300">Gestion SD-WAN</h2>
           <button onClick={fetchAll} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">
@@ -153,17 +145,13 @@ export default function SDWAN() {
           </button>
         </div>
 
-        {successMsg && <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-4 text-sm">{successMsg}</div>}
         {error && <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">⚠ {error}</div>}
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-700">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-px ${
-                activeTab === tab.id
-                  ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-gray-400 hover:text-white"
+                activeTab === tab.id ? "border-blue-500 text-blue-400" : "border-transparent text-gray-400 hover:text-white"
               }`}>
               {tab.label}
             </button>
@@ -172,7 +160,6 @@ export default function SDWAN() {
 
         {loading ? <div className="text-center text-gray-400 mt-20">Chargement...</div> : (
           <>
-            {/* ── TAB 1 : Membres WAN ── */}
             {activeTab === "members" && (
               <>
                 <div className="flex justify-end mb-4">
@@ -181,7 +168,6 @@ export default function SDWAN() {
                     {showMemberForm ? "Annuler" : "+ Ajouter membre WAN"}
                   </button>
                 </div>
-
                 {showMemberForm && (
                   <div className="bg-gray-800 border border-blue-500 rounded-xl p-6 mb-6">
                     <h3 className="text-blue-400 font-semibold mb-4">Ajouter un membre WAN</h3>
@@ -220,7 +206,6 @@ export default function SDWAN() {
                     </form>
                   </div>
                 )}
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -254,7 +239,6 @@ export default function SDWAN() {
               </>
             )}
 
-            {/* ── TAB 2 : SLA ── */}
             {activeTab === "sla" && (
               <>
                 <div className="flex justify-end mb-4">
@@ -263,7 +247,6 @@ export default function SDWAN() {
                     {showSLAForm ? "Annuler" : "+ Nouveau SLA"}
                   </button>
                 </div>
-
                 {showSLAForm && (
                   <div className="bg-gray-800 border border-purple-500 rounded-xl p-6 mb-6">
                     <h3 className="text-purple-400 font-semibold mb-4">Créer un Health Check SLA</h3>
@@ -288,19 +271,19 @@ export default function SDWAN() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-gray-400 text-sm mb-1 block">Latency threshold (ms)</label>
+                        <label className="text-gray-400 text-sm mb-1 block">Latency (ms)</label>
                         <input type="number" value={slaForm.latency}
                           onChange={e => setSlaForm({ ...slaForm, latency: e.target.value })}
                           className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-purple-500" />
                       </div>
                       <div>
-                        <label className="text-gray-400 text-sm mb-1 block">Jitter threshold (ms)</label>
+                        <label className="text-gray-400 text-sm mb-1 block">Jitter (ms)</label>
                         <input type="number" value={slaForm.jitter}
                           onChange={e => setSlaForm({ ...slaForm, jitter: e.target.value })}
                           className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-purple-500" />
                       </div>
                       <div>
-                        <label className="text-gray-400 text-sm mb-1 block">Packet Loss threshold (%)</label>
+                        <label className="text-gray-400 text-sm mb-1 block">Packet Loss (%)</label>
                         <input type="number" value={slaForm.packetloss}
                           onChange={e => setSlaForm({ ...slaForm, packetloss: e.target.value })}
                           className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-purple-500" />
@@ -314,7 +297,6 @@ export default function SDWAN() {
                     </form>
                   </div>
                 )}
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -350,7 +332,6 @@ export default function SDWAN() {
               </>
             )}
 
-            {/* ── TAB 3 : Règles ── */}
             {activeTab === "rules" && (
               <>
                 <div className="flex justify-end mb-4">
@@ -359,7 +340,6 @@ export default function SDWAN() {
                     {showRuleForm ? "Annuler" : "+ Nouvelle règle"}
                   </button>
                 </div>
-
                 {showRuleForm && (
                   <div className="bg-gray-800 border border-green-500 rounded-xl p-6 mb-6">
                     <h3 className="text-green-400 font-semibold mb-4">Créer une règle SD-WAN</h3>
@@ -397,7 +377,6 @@ export default function SDWAN() {
                     </form>
                   </div>
                 )}
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>

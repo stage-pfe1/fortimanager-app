@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
+import toast from "react-hot-toast";
 
 const demoVPNs = [
   { name: "VPN-Site-Paris", phase2: "Paris-P2", status: "up", remote: "203.0.113.10", local: "192.168.1.1" },
@@ -19,7 +20,6 @@ export default function VPN() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", remote: "", psk: "", local_intf: "wan1" });
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     if (!fortigate) { navigate("/login"); return; }
@@ -46,20 +46,41 @@ export default function VPN() {
     e.preventDefault();
     setSaving(true);
     try {
-      await axios.post("/api/v2/cmdb/vpn.ipsec/phase1-interface",
-        { name: form.name, interface: form.local_intf, "remote-gw": form.remote, psksecret: form.psk, type: "static", proposal: "aes256-sha256", "ike-version": "2" },
+      await axios.post(
+        "/api/v2/cmdb/vpn.ipsec/phase1-interface",
+        {
+          name: form.name,
+          interface: form.local_intf,
+          "remote-gw": form.remote,
+          psksecret: form.psk,
+          type: "static",
+          proposal: "aes256-sha256",
+          "ike-version": "2",
+        },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      setSuccessMsg("Tunnel VPN créé avec succès !");
+      toast.success("Tunnel VPN créé avec succès !");
     } catch {
-      setSuccessMsg("Demo — config VPN générée");
+      toast("Demo — config VPN générée", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowForm(false);
       setForm({ name: "", remote: "", psk: "", local_intf: "wan1" });
-      setTimeout(() => setSuccessMsg(""), 4000);
       fetchVPNs();
     }
+  };
+
+  const handleDelete = async (name) => {
+    if (!window.confirm(`Supprimer le tunnel ${name} ?`)) return;
+    try {
+      await axios.delete(`/api/v2/cmdb/vpn.ipsec/phase1-interface/${name}`, {
+        headers: { Authorization: `Bearer ${fortigate.token}` },
+      });
+      toast.success("Tunnel supprimé !");
+    } catch {
+      toast("Demo — suppression simulée", { icon: "⚠️" });
+    }
+    fetchVPNs();
   };
 
   return (
@@ -68,15 +89,20 @@ export default function VPN() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-300">Tunnels VPN IPsec</h2>
           <div className="flex gap-3">
-            <button onClick={fetchVPNs} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">Rafraîchir</button>
+            <button onClick={fetchVPNs} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">
+              Rafraîchir
+            </button>
             <button onClick={() => setShowForm(!showForm)} className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm transition">
               {showForm ? "Annuler" : "+ Nouveau tunnel"}
             </button>
           </div>
         </div>
 
-        {successMsg && <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-4 text-sm">{successMsg}</div>}
-        {error && <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">⚠ {error}</div>}
+        {error && (
+          <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">
+            ⚠ {error}
+          </div>
+        )}
 
         {showForm && (
           <div className="bg-gray-800 border border-purple-500 rounded-xl p-6 mb-6">
@@ -108,7 +134,8 @@ export default function VPN() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <button type="submit" disabled={saving} className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg text-sm font-semibold transition">
+                <button type="submit" disabled={saving}
+                  className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg text-sm font-semibold transition">
                   {saving ? "Création en cours..." : "Créer le tunnel"}
                 </button>
               </div>
@@ -116,7 +143,9 @@ export default function VPN() {
           </div>
         )}
 
-        {loading ? <div className="text-center text-gray-400 mt-20">Chargement...</div> : (
+        {loading ? (
+          <div className="text-center text-gray-400 mt-20">Chargement...</div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -126,6 +155,7 @@ export default function VPN() {
                   <th className="text-left py-3 px-4">Local IP</th>
                   <th className="text-left py-3 px-4">Phase 2</th>
                   <th className="text-left py-3 px-4">Statut</th>
+                  <th className="text-left py-3 px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,7 +168,15 @@ export default function VPN() {
                     <td className="py-3 px-4">
                       <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                         vpn.status === "up" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                      }`}>{vpn.status || "unknown"}</span>
+                      }`}>
+                        {vpn.status || "unknown"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button onClick={() => handleDelete(vpn.name)}
+                        className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded text-xs transition">
+                        Supprimer
+                      </button>
                     </td>
                   </tr>
                 ))}

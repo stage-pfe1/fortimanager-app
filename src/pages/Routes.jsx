@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
+import toast from "react-hot-toast";
 
 const demoRoutes = [
   { seq_num: 1, dst: "0.0.0.0/0", gateway: "203.0.113.254", device: "wan1", distance: 10, priority: 0, status: "active" },
@@ -19,7 +20,6 @@ export default function Routes() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
   const [form, setForm] = useState({ dst: "", gateway: "", device: "wan1", distance: "10", priority: "0" });
 
   useEffect(() => {
@@ -51,14 +51,13 @@ export default function Routes() {
         { dst: form.dst, gateway: form.gateway, device: form.device, distance: parseInt(form.distance), priority: parseInt(form.priority) },
         { headers: { Authorization: `Bearer ${fortigate.token}` } }
       );
-      setSuccessMsg("Route ajoutée avec succès !");
+      toast.success("Route ajoutée avec succès !");
     } catch {
-      setSuccessMsg("Demo — route générée");
+      toast("Demo — route générée", { icon: "⚠️" });
     } finally {
       setSaving(false);
       setShowForm(false);
       setForm({ dst: "", gateway: "", device: "wan1", distance: "10", priority: "0" });
-      setTimeout(() => setSuccessMsg(""), 4000);
       fetchRoutes();
     }
   };
@@ -69,9 +68,10 @@ export default function Routes() {
       await axios.delete(`/api/v2/cmdb/router/static/${seqNum}`, {
         headers: { Authorization: `Bearer ${fortigate.token}` },
       });
-    } catch {}
-    setSuccessMsg("Route supprimée !");
-    setTimeout(() => setSuccessMsg(""), 3000);
+      toast.success("Route supprimée !");
+    } catch {
+      toast("Demo — suppression simulée", { icon: "⚠️" });
+    }
     fetchRoutes();
   };
 
@@ -88,7 +88,6 @@ export default function Routes() {
           </div>
         </div>
 
-        {successMsg && <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-4 text-sm">{successMsg}</div>}
         {error && <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-400 px-4 py-3 rounded-lg mb-4 text-sm">⚠ {error}</div>}
 
         {showForm && (
