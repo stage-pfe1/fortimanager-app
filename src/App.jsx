@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Interfaces from "./pages/Interfaces";
@@ -9,6 +10,7 @@ import Policies from "./pages/Policies";
 import SDWAN from "./pages/SDWAN";
 import Monitoring from "./pages/Monitoring";
 import Logs from "./pages/Logs";
+
 function App() {
   return (
     <AuthProvider>
@@ -16,14 +18,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/interfaces" element={<Interfaces />} />
-          <Route path="/vpn" element={<VPN />} />
-          <Route path="/routes" element={<RoutesPage />} />
-          <Route path="/policies" element={<Policies />} />
-          <Route path="/sdwan" element={<SDWAN />} />
-          <Route path="/monitoring" element={<Monitoring />} />
-          <Route path="/logs" element={<Logs />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/interfaces" element={<ProtectedRoute><Interfaces /></ProtectedRoute>} />
+          <Route path="/vpn" element={<ProtectedRoute><VPN /></ProtectedRoute>} />
+          <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
+          <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>} />
+          <Route path="/sdwan" element={<ProtectedRoute><SDWAN /></ProtectedRoute>} />
+          <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
+          <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
