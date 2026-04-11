@@ -10,6 +10,7 @@ import Policies from "./pages/Policies";
 import SDWAN from "./pages/SDWAN";
 import Monitoring from "./pages/Monitoring";
 import Logs from "./pages/Logs";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/sdwan" element={<ProtectedRoute><SDWAN /></ProtectedRoute>} />
           <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
