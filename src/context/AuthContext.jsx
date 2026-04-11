@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 const SESSION_TIMEOUT = 10 * 60 * 1000; // 30 minutes
 
 export function AuthProvider({ children }) {
@@ -18,12 +18,11 @@ export function AuthProvider({ children }) {
           return null;
         }
       }
-      return null;
+      return null;  // ← hada el mhim — moch demo mode
     } catch {
       return null;
     }
   });
-
   const timeoutRef = useRef(null);
 
   const resetTimeout = () => {

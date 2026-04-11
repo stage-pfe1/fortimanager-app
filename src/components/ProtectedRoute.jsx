@@ -1,10 +1,11 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const { fortigate } = useAuth();
+  const { fortigate } = useContext(AuthContext);
 
-  if (!fortigate) {
+  if (!fortigate || !fortigate.token) {
     return <Navigate to="/login" replace />;
   }
 
